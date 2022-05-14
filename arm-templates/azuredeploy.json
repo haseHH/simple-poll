@@ -1,0 +1,128 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "storageAccountName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 24
+        },
+        "storageTableName": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 63
+        },
+        "consumptionPlanName": {
+            "type": "string"
+        },
+        "functionAppName": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountId": "[concat(resourceGroup().id, '/providers/Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "storageAccountConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';EndpointSuffix=core.windows.net;AccountKey=')]",
+        "consumptionPlanId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('consumptionPlanName'))]"
+    },
+    "resources": [
+        {
+            "comments": "Storage Account",
+            "name": "[parameters('storageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2019-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[resourceGroup().tags]",
+            "kind": "StorageV2",
+            "sku": {
+                "name": "Standard_LRS",
+                "tier": "Standard"
+            }
+        },
+        {
+            "comments": "Storage Table",
+            "name": "[concat(parameters('storageAccountName'), '/default/', parameters('storageTableName'))]",
+            "type": "Microsoft.Storage/storageAccounts/tableServices/tables",
+            "apiVersion": "2021-09-01",
+            "dependsOn": [
+                "[parameters('storageAccountName')]"
+            ]
+        },
+        {
+            "comments": "Consumption Plan",
+            "name": "[parameters('consumptionPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2020-06-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[resourceGroup().tags]",
+            "kind": "functionapp",
+            "sku": {
+                "name": "Y1",
+                "tier": "Dynamic",
+                "size": "Y1",
+                "family": "Y",
+                "capacity": 0
+            },
+            "properties": {
+                "maximumElasticWorkerCount": 1,
+                "targetWorkerCount": 0,
+                "targetWorkerSizeId": 0
+            }
+        },
+        {
+            "comments": "Function App",
+            "name": "[parameters('functionAppName')]",
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2018-11-01",
+            "location": "[resourceGroup().location]",
+            "tags": "[resourceGroup().tags]",
+            "dependsOn": [
+                "[parameters('storageAccountName')]",
+                "[parameters('consumptionPlanName')]"
+            ],
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "kind": "functionapp",
+            "properties": {
+                "name": "[parameters('functionAppName')]",
+                "serverFarmId": "[variables('consumptionPlanId')]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~3"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME",
+                            "value": "powershell"
+                        },
+                        {
+                            "name": "FUNCTIONS_WORKER_RUNTIME_VERSION",
+                            "value": "~7"
+                        },
+                        {
+                            "name": "StorageTableName",
+                            "value": "[parameters('storageTableName')]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat(variables('storageAccountConnString'),listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat(variables('storageAccountConnString'),listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat(variables('storageAccountConnString'),listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(parameters('functionAppName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
