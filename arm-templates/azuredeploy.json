@@ -105,6 +105,10 @@
                             "value": "[parameters('storageTableName')]"
                         },
                         {
+                            "name": "QuestionPartitionKey",
+                            "value": "question"
+                        },
+                        {
                             "name": "AzureWebJobsStorage",
                             "value": "[concat(variables('storageAccountConnString'),listKeys(variables('storageAccountId'), '2019-06-01').keys[0].value)]"
                         },
