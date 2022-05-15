@@ -35,14 +35,22 @@ try {
     }
     #endregion registerOptions
 
-    Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-        StatusCode = [HttpStatusCode]::OK
-        Body       = 'Poll created.'
-    })
+    # answer has to be skipped when called as a script
+    if (-not $RequestBody.skipAnswer) {
+        Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+            StatusCode = [HttpStatusCode]::OK
+            Body       = 'Poll created.'
+        })
+    }
 }
 catch {
-    Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
-        StatusCode = [HttpStatusCode]::InternalServerError
-        Body       = 'Poll creation failed.'
-    })
+    # answer has to be skipped when called as a script
+    if ($RequestBody.skipAnswer) {
+        throw 'Poll creation failed.'
+    } else {
+        Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
+            StatusCode = [HttpStatusCode]::InternalServerError
+            Body       = 'Poll creation failed.'
+        })
+    }
 }
