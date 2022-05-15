@@ -6,10 +6,15 @@ if ($null -eq $resourceGroup) {
     New-AzResourceGroup -Name $ResourceGroupName -Location 'westeurope' | Out-Null
 }
 
+$baseScriptPath = $PSScriptRoot
+if (($null -ne $psEditor) -and ([string]::IsNullOrEmpty($baseScriptPath))) {
+    $baseScriptPath = ([Io.FileInfo]$psEditor.GetEditorContext().CurrentFile.Path).Directory.FullName
+}
+
 $deployParams = @{
     ResourceGroupName     = $ResourceGroupName
-    TemplateFile          = 'arm-templates\azuredeploy.json'
-    TemplateParameterFile = 'arm-templates\azuredeploy.parameters.json'
+    TemplateFile          = "${baseScriptPath}\..\arm-templates\azuredeploy.json"
+    TemplateParameterFile = "${baseScriptPath}\..\arm-templates\azuredeploy.parameters.json"
     Mode                  = 'Incremental'
     Verbose               = $true
 }
