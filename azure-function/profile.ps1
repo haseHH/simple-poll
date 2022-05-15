@@ -16,4 +16,12 @@ if ($env:MSI_SECRET) {
     Connect-AzAccount -Identity | Out-Null
 }
 
-# You can also define functions or aliases that can be referenced in any of your PowerShell functions.
+function Get-StorageContext {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string] $ConnectionString = $env:AzureWebJobsStorage
+    )
+    New-AzStorageContext -ConnectionString $ConnectionString
+}

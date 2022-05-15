@@ -1,3 +1,7 @@
 {
-    "name": "Azure"
+    "question": "Is this a secure application?",
+    "options": [
+        "Depends on your definition of secure...",
+        "Yeah no, not really. But It'll do."
+    ]
 }
