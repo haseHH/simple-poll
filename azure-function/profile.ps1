@@ -25,3 +25,27 @@ function Get-StorageContext {
     )
     New-AzStorageContext -ConnectionString $ConnectionString
 }
+
+function Get-HighestQuestionId {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNull()]
+        [Microsoft.WindowsAzure.Commands.Common.Storage.ResourceModel.AzureStorageTable] $Table
+    )
+
+    $questions = $Table.CloudTable.ExecuteQuery(
+        (New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.TableQuery').Where(
+            "PartitionKey eq '${env:QuestionPartitionKey}'"
+        )
+    )
+
+    [int32[]]$questionIds = $questions | Select-Object -ExpandProperty 'RowKey'
+    if ($questionIds.Count -lt 1) {
+        [int32]$highestQuestionId = 0
+    } else {
+        [int32]$highestQuestionId = $questionIds | Sort-Object -Descending | Select-Object -First 1
+    }
+
+    return $highestQuestionId
+}

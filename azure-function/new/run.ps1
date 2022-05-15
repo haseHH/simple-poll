@@ -11,24 +11,12 @@ try {
     $PSDefaultParameterValues["Get-AzStorage*:Context"] = Get-StorageContext
 
     #region registerQuestion
-    # get highest question ID
-    $questionPartitionKey = 'question'
+    # get new question ID
     $table = Get-AzStorageTable -Name $env:StorageTableName
-    $questions = $table.CloudTable.ExecuteQuery(
-        (New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.TableQuery').Where(
-            "PartitionKey eq '${questionPartitionKey}'"
-        )
-    )
-    [int32[]]$questionIds = $questions | Select-Object -ExpandProperty 'RowKey'
-    if ($questionIds.Count -lt 1) {
-        [int32]$highestQuestionId = 0
-    } else {
-        [int32]$highestQuestionId = $questionIds | Sort-Object -Descending | Select-Object -First 1
-    }
+    [int32]$newQuestionId = (Get-HighestQuestionId -Table $table) + 1
 
     # add question to table
-    [int32]$newQuestionId = $highestQuestionId + 1
-    $newQuestionEntity = New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.DynamicTableEntity' -ArgumentList @($questionPartitionKey, $newQuestionId.ToString())
+    $newQuestionEntity = New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.DynamicTableEntity' -ArgumentList @($env:QuestionPartitionKey, $newQuestionId.ToString())
     $newQuestionEntity.Properties.Add('questionText', $Question)
     $table.CloudTable.Execute(
         [Microsoft.Azure.Cosmos.Table.TableOperation]::Insert($newQuestionEntity)
