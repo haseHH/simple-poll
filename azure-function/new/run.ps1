@@ -35,11 +35,27 @@ try {
     }
     #endregion registerOptions
 
+    #region prepareResult
+    $result = [ordered]@{
+        question = $Question
+        options  = [System.Collections.ArrayList]@()
+    }
+    for ($i = 0; $i -lt $Options.Count; $i++) {
+        $option = $Options[$i]
+        $result.options.Add([ordered]@{
+            answer = ($i + 1)
+            text   = $option
+        }) | Out-Null
+    }
+    #endregion prepareResult
+
     # answer has to be skipped when called as a script
-    if (-not $RequestBody.skipAnswer) {
+    if ($RequestBody.skipAnswer) {
+        return $result
+    } else {
         Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
             StatusCode = [HttpStatusCode]::OK
-            Body       = 'Poll created.'
+            Body       = $result | ConvertTo-Json -Depth 100
         })
     }
 }

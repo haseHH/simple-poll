@@ -18,22 +18,64 @@ try {
             $commandPayload = $Command.Substring(4) -split '\|' | ForEach-Object {$_.Trim()}
             [string]$question  = $commandPayload[0]
             [string[]]$options = $commandPayload[1..($commandPayload.Count - 1)]
-            & "$baseScriptPath/../new/run.ps1" -Request @{Body = @{
+            $pollObject = & "$baseScriptPath/../new/run.ps1" -Request @{Body = @{
                 skipAnswer = $true
                 question   = $question
                 options    = $options
             } | ConvertTo-Json}
+            $formattedOptions = [System.Collections.ArrayList]@()
+            foreach ($option in $pollObject.options) {
+                $formattedOptions += "$($option.answer)) $($option.text)"
+            }
+            $responseMessage = @"
+$($pollObject.question)
+
+$($formattedOptions -join "`n")
+
+Stimmt ab mit "!vote" und der Nummer eurer Wahl, zum Beispiel "!vote 2"
+"@
+        }
+        'results' {
+            $pollResults = & "$baseScriptPath/../results/run.ps1" -Request @{Query = @{skipAnswer = $true}}
+            $votesGiven = ($pollResults.results.votes | Measure-Object -Sum).Sum
+            $formattedResults = [System.Collections.ArrayList]@()
+            foreach ($option in $pollResults.results) {
+                $formattedResults += "`n$($option.answer)) $($option.text)"
+                $formattedResults += "$($option.votes) Stimmen ($(
+                    if ($votesGiven -eq 0) {
+                        '0'
+                    } else {
+                        [string]$percentage = (([decimal]$option.votes / $votesGiven) * 100)
+                        $percentage = $percentage.Replace('.', ',')
+                        $decimalIndex = $percentage.IndexOf(',')
+                        if ($decimalIndex -eq -1) {
+                            $percentage
+                        } else {
+                            $percentage[0..($decimalIndex + 2)] -join ''
+                        }
+                    }
+                )%)"
+            }
+            $responseMessage = @"
+Ergebnisse zu "$($pollResults.question)"
+
+Es wurden $($votesGiven.ToString()) Stimmen abgegeben:
+$($formattedResults -join "`n")
+"@
+        }
+        default {
+            $responseMessage = "Unbekanntes Subkommando '${subCommand}' - keine Aktion ausgeführt."
         }
     }
 
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body       = 'Command executed.'
+        Body       = (@{message = $responseMessage} | ConvertTo-Json)
     })
 }
 catch {
     Push-OutputBinding -Name Response -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::InternalServerError
-        Body       = 'Command failed.'
+        Body       = (@{message = 'Command failed.'} | ConvertTo-Json)
     })
 }
