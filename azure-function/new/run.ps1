@@ -26,11 +26,11 @@ try {
     #region registerOptions
     for ($i = 0; $i -lt $Options.Count; $i++) {
         $optionPartitionKey = "optionFor$($newQuestionId.ToString())"
-        $newQuestionEntity = New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.DynamicTableEntity' -ArgumentList @($optionPartitionKey, ($i+1).ToString())
-        $newQuestionEntity.Properties.Add('optionText', $Options[$i])
-        $newQuestionEntity.Properties.Add('optionVotes', 0)
+        $newOptionEntity = New-Object -TypeName 'Microsoft.Azure.Cosmos.Table.DynamicTableEntity' -ArgumentList @($optionPartitionKey, ($i+1).ToString())
+        $newOptionEntity.Properties.Add('optionText', $Options[$i])
+        $newOptionEntity.Properties.Add('optionVotes', 0)
         $table.CloudTable.Execute(
-            [Microsoft.Azure.Cosmos.Table.TableOperation]::Insert($newQuestionEntity)
+            [Microsoft.Azure.Cosmos.Table.TableOperation]::Insert($newOptionEntity)
         ) | Out-Null
     }
     #endregion registerOptions
