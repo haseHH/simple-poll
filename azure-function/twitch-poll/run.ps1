@@ -25,23 +25,16 @@ try {
             } | ConvertTo-Json}
             $formattedOptions = [System.Collections.ArrayList]@()
             foreach ($option in $pollObject.options) {
-                $formattedOptions += "$($option.answer)) $($option.text)"
+                $formattedOptions += "#$($option.answer) `"$($option.text)`""
             }
-            $responseMessage = @"
-$($pollObject.question)
-
-$($formattedOptions -join "`n")
-
-Stimmt ab mit "!vote" und der Nummer eurer Wahl, zum Beispiel "!vote 2"
-"@
+            $responseMessage = "$($pollObject.question) - $($formattedOptions -join " - ") - Stimmt ab mit `"!vote`" und der Nummer eurer Wahl, zum Beispiel `"!vote 2`""
         }
         'results' {
             $pollResults = & "$baseScriptPath/../results/run.ps1" -Request @{Query = @{skipAnswer = $true}}
             $votesGiven = ($pollResults.results.votes | Measure-Object -Sum).Sum
             $formattedResults = [System.Collections.ArrayList]@()
             foreach ($option in $pollResults.results) {
-                $formattedResults += "`n$($option.answer)) $($option.text)"
-                $formattedResults += "$($option.votes) Stimmen ($(
+                $formattedResults += "#$($option.answer) `"$($option.text)`" $($option.votes) Stimmen ($(
                     if ($votesGiven -eq 0) {
                         '0'
                     } else {
@@ -56,15 +49,10 @@ Stimmt ab mit "!vote" und der Nummer eurer Wahl, zum Beispiel "!vote 2"
                     }
                 )%)"
             }
-            $responseMessage = @"
-Ergebnisse zu "$($pollResults.question)"
-
-Es wurden $($votesGiven.ToString()) Stimmen abgegeben:
-$($formattedResults -join "`n")
-"@
+            $responseMessage = "Ergebnisse zu `"$($pollResults.question)`" Es wurden $($votesGiven.ToString()) Stimmen abgegeben: $($formattedResults -join " - ")"
         }
         default {
-            $responseMessage = "Unbekanntes Subkommando '${subCommand}' - keine Aktion ausgeführt."
+            $responseMessage = "Unbekanntes Subkommando `"${subCommand}`" - keine Aktion ausgeführt."
         }
     }
 
