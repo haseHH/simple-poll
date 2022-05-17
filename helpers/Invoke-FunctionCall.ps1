@@ -1,4 +1,4 @@
-$Function = 'new'
+$Function = 'twitch-poll'
 
 $baseScriptPath = $PSScriptRoot
 if (($null -ne $psEditor) -and ([string]::IsNullOrEmpty($baseScriptPath))) {
@@ -20,4 +20,4 @@ if ($method -eq 'GET') {
     $callParams.Add('Uri', "${baseUri}/${Function}")
     $callParams.Add('Body', $request)
 }
-Invoke-RestMethod @callParams
+(Invoke-RestMethod @callParams).message
