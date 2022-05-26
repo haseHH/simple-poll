@@ -8,7 +8,7 @@
         "storageTableName": {
             "value": "simplepoll"
         },
-        "consumptionPlanName": {
+        "appServicePlanName": {
             "value": "hhh-simple-poll-asp"
         },
         "functionAppName": {

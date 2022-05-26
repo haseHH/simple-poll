@@ -12,7 +12,7 @@
             "minLength": 3,
             "maxLength": 63
         },
-        "consumptionPlanName": {
+        "appServicePlanName": {
             "type": "string"
         },
         "functionAppName": {
@@ -22,7 +22,7 @@
     "variables": {
         "storageAccountId": "[concat(resourceGroup().id, '/providers/Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "storageAccountConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';EndpointSuffix=core.windows.net;AccountKey=')]",
-        "consumptionPlanId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('consumptionPlanName'))]"
+        "appServicePlanId": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('appServicePlanName'))]"
     },
     "resources": [
         {
@@ -48,19 +48,19 @@
             ]
         },
         {
-            "comments": "Consumption Plan",
-            "name": "[parameters('consumptionPlanName')]",
+            "comments": "App Service Plan",
+            "name": "[parameters('appServicePlanName')]",
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2020-06-01",
             "location": "[resourceGroup().location]",
             "tags": "[resourceGroup().tags]",
             "kind": "functionapp",
             "sku": {
-                "name": "Y1",
-                "tier": "Dynamic",
-                "size": "Y1",
-                "family": "Y",
-                "capacity": 0
+                "name": "B1",
+                "tier": "Basic",
+                "size": "B1",
+                "family": "B",
+                "capacity": 1
             },
             "properties": {
                 "maximumElasticWorkerCount": 1,
@@ -77,7 +77,7 @@
             "tags": "[resourceGroup().tags]",
             "dependsOn": [
                 "[parameters('storageAccountName')]",
-                "[parameters('consumptionPlanName')]"
+                "[parameters('appServicePlanName')]"
             ],
             "identity": {
                 "type": "SystemAssigned"
@@ -85,8 +85,9 @@
             "kind": "functionapp",
             "properties": {
                 "name": "[parameters('functionAppName')]",
-                "serverFarmId": "[variables('consumptionPlanId')]",
+                "serverFarmId": "[variables('appServicePlanId')]",
                 "siteConfig": {
+                    "alwaysOn": true,
                     "appSettings": [
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
